@@ -164,7 +164,6 @@ String::String(const String& str)
 }
 
 String::String(const char* s) {
-    std::cout << "GFSHGGSJ\n";
     sz = std::strlen(s);
     cap = sz + 1;
     arr = new char[cap];
