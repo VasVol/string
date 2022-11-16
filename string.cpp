@@ -1,7 +1,7 @@
 #include "string.h"
 
 std::ostream& operator<<(std::ostream& out, const String& s) {
-    return out << s.arr;
+    return out << s.data();
 }
 
 std::istream& operator>>(std::istream& in, String& s) {
@@ -15,56 +15,56 @@ std::istream& operator>>(std::istream& in, String& s) {
     return in;
 }
 
-bool String::operator>(const String& str) const {
-    return str < *this;
+bool operator>(const String& str1, const String& str2) {
+    return str2 < str1;
 }
 
-bool String::operator<=(const String& str) const {
-    return !(*this > str);
+bool operator<=(const String& str1, const String& str2) {
+    return !(str1 > str2);
 }
 
-bool String::operator>=(const String& str) const {
-    return !(*this < str);
+bool operator>=(const String& str1, const String& str2) {
+    return !(str1 < str2);
 }
 
-bool String::operator==(const String& str) const {
-    if (sz != str.sz) {
+bool operator==(const String& str1, const String& str2) {
+    if (str1.size() != str2.size()) {
         return false;
     }
-    for (size_t i = 0; i < sz; ++i) {
-        if (arr[i] != str[i]) {
+    for (size_t i = 0; i < str1.size(); ++i) {
+        if (str1[i] != str2[i]) {
             return false;
         }
     }
     return true;
 }
 
-bool String::operator!=(const String& str) const {
-    return !(*this == str);
+bool operator!=(const String& str1, const String& str2) {
+    return !(str1 == str2);
 }
 
-bool String::operator<(const String& str) const {
-    for (size_t i = 0; i < std::min(sz, str.sz); ++i) {
-        if (arr[i] > str[i]) {
+bool operator<(const String& str1, const String& str2) {
+    for (size_t i = 0; i < std::min(str1.size(), str2.size()); ++i) {
+        if (str1[i] > str2[i]) {
             return false;
         }
-        if (arr[i] < str[i]) {
+        if (str1[i] < str2[i]) {
             return true;
         }
     }
-    return sz < str.sz;
+    return str1.size() < str2.size();
 }
 
-String& String::operator+(const String& str) {
-    String* new_string = new String(*this);
-    *new_string += str;
-    return *new_string;
+String operator+(const String& str1, const String& str2) {
+    String new_string(str1);
+    new_string += str2;
+    return new_string;
 }
 
-String& String::operator+(char c) {
-    String* new_string = new String(*this);
-    *new_string += c;
-    return *new_string;
+String operator+(const String& str, char c) {
+    String new_string(str);
+    new_string += c;
+    return new_string;
 }
 
 const char& String::back() const {
@@ -110,14 +110,18 @@ size_t String::length() const {
 }
 
 size_t String::size() const {
-    return sz + 1;
+    return sz;
 }
 
 size_t String::capacity() const {
-    return cap;
+    return cap - 1;
 }
 
-char* String::data() const {
+char* String::data() {
+    return arr;
+}
+
+const char* String::data() const {
     return arr;
 }
 
@@ -159,33 +163,29 @@ String::~String() {
 }
 
 String::String(const String& str)
-    : arr(new char[str.sz + 1]), sz(str.sz), cap(str.sz + 1) {
+    : sz(str.sz), cap(str.sz + 1), arr(new char[str.sz + 1]) {
     std::copy(str.arr, str.arr + sz + 1, arr);
 }
 
-String::String(const char* s) {
-    sz = std::strlen(s);
-    cap = sz + 1;
-    arr = new char[cap];
+String::String(const char* s)
+    : sz(std::strlen(s)), cap(sz + 1), arr(new char[cap]) {
     std::copy(s, s + sz + 1, arr);
 }
 
-String::String(size_t n, char c) : arr(new char[n + 1]), sz(n), cap(n + 1) {
+String::String(size_t n, char c) : sz(n), cap(n + 1), arr(new char[n + 1]) {
     std::fill(arr, arr + sz, c);
     arr[cap - 1] = '\0';
 }
 
 String::String(char c) : String(1, c) {}
 
-String::String() : arr(new char[1]), sz(0), cap(1) {
+String::String() : sz(0), cap(1), arr(new char[1]) {
     arr[0] = '\0';
 }
 
-String::String(size_t start, size_t count, char* uk) {
-    sz = count;
-    cap = count + 1;
-    arr = new char[cap];
-    std::copy(uk + start, uk + start + count, arr);
+String::String(size_t start, size_t count, char* ptr)
+    : sz(count), cap(count + 1), arr(new char[cap]) {
+    std::copy(ptr + start, ptr + start + count, arr);
 }
 
 void String::swap(String& str) {
@@ -206,19 +206,16 @@ String String::substr(size_t start, size_t count) const {
     return String(start, count, arr);
 }
 
+bool mem_equal(void* ptr1, void* ptr2, int k) {
+    return std::memcmp(ptr1, ptr2, k) == 0;
+}
+
 size_t String::find(const String& str) const {
     if (sz < str.sz) {
         return sz;
     }
     for (size_t i = 0; i <= sz - str.sz; ++i) {
-        bool flag = true;
-        for (size_t j = 0; j < str.sz; ++j) {
-            if (arr[j + i] != str[j]) {
-                flag = false;
-                break;
-            }
-        }
-        if (flag) {
+        if (mem_equal(arr + i, str.arr, str.sz)) {
             return i;
         }
     }
@@ -230,14 +227,7 @@ size_t String::rfind(const String& str) const {
         return sz;
     }
     for (size_t i = sz - str.sz;; --i) {
-        bool flag = true;
-        for (size_t j = 0; j < str.sz; ++j) {
-            if (arr[j + i] != str[j]) {
-                flag = false;
-                break;
-            }
-        }
-        if (flag) {
+        if (mem_equal(arr + i, str.arr, str.sz)) {
             return i;
         }
         if (i == 0) {
@@ -247,38 +237,14 @@ size_t String::rfind(const String& str) const {
     return sz;
 }
 
-String& operator+(char c, const String& str) {
-    String* new_string = new String(1, c);
-    *new_string += str;
-    return *new_string;
+String operator+(char c, const String& str) {
+    String new_string(1, c);
+    new_string += str;
+    return new_string;
 }
 
-String& operator+(const char* str1, const String& str2) {
-    String* new_string = new String(str1);
-    *new_string += str2;
-    return *new_string;
-}
-
-bool operator==(const char* str1, const String& str2) {
-    return String(str1) == str2;
-}
-
-bool operator<(const char* str1, const String& str2) {
-    return String(str1) < str2;
-}
-
-bool operator>(const char* str1, const String& str2) {
-    return String(str1) > str2;
-}
-
-bool operator!=(const char* str1, const String& str2) {
-    return String(str1) != str2;
-}
-
-bool operator<=(const char* str1, const String& str2) {
-    return String(str1) <= str2;
-}
-
-bool operator>=(const char* str1, const String& str2) {
-    return String(str1) >= str2;
+String operator+(const char* str1, const String& str2) {
+    String new_string(str1);
+    new_string += str2;
+    return new_string;
 }
