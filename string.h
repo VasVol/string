@@ -45,12 +45,8 @@ class String {
 std::ostream& operator<<(std::ostream& out, const String& s);
 std::istream& operator>>(std::istream& in, String& s);
 
+int operator<=>(const String& str1, const String& str2);
 bool operator==(const String& str1, const String& str2);
-bool operator!=(const String& str1, const String& str2);
-bool operator<(const String& str1, const String& str2);
-bool operator>(const String& str1, const String& str2);
-bool operator<=(const String& str1, const String& str2);
-bool operator>=(const String& str1, const String& str2);
 
 String operator+(char c, const String& str);
 String operator+(const char* str1, const String& str2);

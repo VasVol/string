@@ -15,44 +15,23 @@ std::istream& operator>>(std::istream& in, String& s) {
     return in;
 }
 
-bool operator>(const String& str1, const String& str2) {
-    return str2 < str1;
-}
-
-bool operator<=(const String& str1, const String& str2) {
-    return !(str1 > str2);
-}
-
-bool operator>=(const String& str1, const String& str2) {
-    return !(str1 < str2);
+int operator<=>(const String& str1, const String& str2) {
+    size_t len = std::min(str1.size(), str2.size());
+    int ans = memcmp(str1.data(), str2.data(), len);
+    if (ans != 0) {
+        return ans;
+    }
+    if (str1.size() < str2.size()) {
+        return -1;
+    }
+    if (str1.size() > str2.size()) {
+        return 1;
+    }
+    return 0;
 }
 
 bool operator==(const String& str1, const String& str2) {
-    if (str1.size() != str2.size()) {
-        return false;
-    }
-    for (size_t i = 0; i < str1.size(); ++i) {
-        if (str1[i] != str2[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-bool operator!=(const String& str1, const String& str2) {
-    return !(str1 == str2);
-}
-
-bool operator<(const String& str1, const String& str2) {
-    for (size_t i = 0; i < std::min(str1.size(), str2.size()); ++i) {
-        if (str1[i] > str2[i]) {
-            return false;
-        }
-        if (str1[i] < str2[i]) {
-            return true;
-        }
-    }
-    return str1.size() < str2.size();
+    return (str1 <=> str2) == 0;
 }
 
 String operator+(const String& str1, const String& str2) {
@@ -206,7 +185,7 @@ String String::substr(size_t start, size_t count) const {
     return String(start, count, arr);
 }
 
-bool mem_equal(void* ptr1, void* ptr2, int k) {
+bool mem_equal(void* ptr1, void* ptr2, size_t k) {
     return std::memcmp(ptr1, ptr2, k) == 0;
 }
 
@@ -223,15 +202,9 @@ size_t String::find(const String& str) const {
 }
 
 size_t String::rfind(const String& str) const {
-    if (sz < str.sz) {
-        return sz;
-    }
-    for (size_t i = sz - str.sz;; --i) {
+    for (int64_t i = static_cast<int64_t>(sz) - str.sz; i >= 0; --i) {
         if (mem_equal(arr + i, str.arr, str.sz)) {
             return i;
-        }
-        if (i == 0) {
-            break;
         }
     }
     return sz;
